@@ -31,10 +31,11 @@ given (lc $prog) {
     when ('discord') {
         print UNDERLINE MAGENTA "Updating Discord\n\n";
 
+        # Download archive
         if (not defined $path) {
-            print "Enter the path to the archive containing new Discord version: ";
-            $path = <STDIN>; print "\n";
-            chomp $path;
+            $path = "/tmp/discord.tar.gz";
+            system "wget -O $path 'https://discord.com/api/download?platform=linux&format=tar.gz'";
+            print YELLOW "Downloaded archive to $path\n";
         }
         $dest = "/usr/share/discord" if not defined $dest;
 
