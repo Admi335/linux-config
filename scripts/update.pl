@@ -42,7 +42,7 @@ if ($help) {
 $prog = shift @ARGV;
 
 if (!$prog) {
-    print "Usage: $0 <program> [-p /path] [-d /destination]\n";
+    print "Usage: $0 <program> [OPTIONS]\n";
     print "Try '$0 --help' for more information.\n";
     exit 1;
 }
