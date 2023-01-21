@@ -4,6 +4,7 @@ use strict;
 use warnings;
 no warnings "experimental";
 use feature "switch";
+use Getopt::Long;
 use Term::ANSIColor;
 use Term::ANSIColor qw(:constants);
 
@@ -11,18 +12,40 @@ $Term::ANSIColor::AUTORESET = 1;
 
 
 sub throw_err {
-    print BOLD "update: ", RED "fatal error: ";
-    print "$_[0]\n";
-    die "update terminated\n";
+    my $err_msg = shift;
+    print STDERR BOLD "$0: ", RED "Error: ";
+    print STDERR "$_[0]\n";
+    die "$0 terminated\n";
 }
 
 
-throw_err "must be run as root" if $> != 0;
-throw_err "no arguments" if not defined $ARGV[0];
+throw_err "Must be run as root" if $> != 0;
 
-my $prog = $ARGV[0];
-my $path = $ARGV[1];
-my $dest = $ARGV[2];
+my $prog;
+my $path, $dest;
+my $help;
+
+GetOptions(
+    "path|p=s"        => \$path,
+    "destination|d=s" => \$dest,
+    "help|h"          => \$help
+);
+
+if ($help) {
+    print "Usage: $0 <program> [OPTIONS]\n";
+    print "  -p, --path             Path to a custom installation file/executable/archive. (optional)\n";
+    print "  -d, --destination      Destination where the program will be installed. (optional)\n";
+    print "  -h, --help             Show this help message.\n";
+    exit;
+}
+
+$prog = shift @ARGV;
+
+if (!$prog) {
+    print "Usage: $0 <program> [-p /path] [-d /destination]\n";
+    print "Try '$0 --help' for more information.\n";
+    exit 1;
+}
 
 print "\n";
 
@@ -34,30 +57,30 @@ given (lc $prog) {
         # Download archive
         if (not defined $path) {
             $path = "/tmp/discord.tar.gz";
-            system "wget -O $path 'https://discord.com/api/download?platform=linux&format=tar.gz'";
+            system "wget -O $path 'https://discord.com/api/download?platform=linux&format=tar.gz'" or throw_err "Failed to download archive: $!";
             print YELLOW "Downloaded archive to $path\n";
         }
         $dest = "/usr/share/discord" if not defined $dest;
 
         # Extract archive
-        system "mkdir -p $dest && tar -xzf $path -C $dest --strip-components=1";
+        system "mkdir -p $dest && tar -xzf $path -C $dest --strip-components=1" or throw_err "Failed to extract archive: $!";
         print YELLOW "Extracted archive to $dest\n";
 
         # Create a symbolic link
-        system "ln -sf $dest/Discord /usr/bin/Discord";
+        system "ln -sf $dest/Discord /usr/bin/Discord" or throw_err "Failed to create a symbolic link: $!";
         print YELLOW "Created a symbolic link in /usr/bin\n";
 
         # Make a shortcut
-        open(IN, '<', "$dest/discord.desktop") or die $!;
-        open(OUT, '>', "/usr/share/applications/discord.desktop") or die $!;
+        open(my $IN, '<', "$dest/discord.desktop") or throw_err "Failed to open discord.desktop: $!";
+        open(my $OUT, '>', "/usr/share/applications/discord.desktop") or throw_err "Failed to create a shortcut: $!";
         
-        while(<IN>) { 
+        while(<$in>) { 
             s/Icon=discord/Icon=$dest\/discord.png/g;
-            print OUT $_;
+            print $out $_;
         }
 
-        close IN;
-        close OUT;
+        close $in;
+        close $out;
 
         print YELLOW "Created a shortcut in /usr/share/applications\n";
 
