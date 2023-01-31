@@ -71,8 +71,8 @@ given (lc $prog) {
         print YELLOW "Created a symbolic link in /usr/bin\n";
 
         # Make a shortcut
-        open(my $IN, '<', "$dest/discord.desktop") or throw_err "Failed to open discord.desktop: $!";
-        open(my $OUT, '>', "/usr/share/applications/discord.desktop") or throw_err "Failed to create a shortcut: $!";
+        open(my $in, '<', "$dest/discord.desktop") or throw_err "Failed to open discord.desktop: $!";
+        open(my $out, '>', "/usr/share/applications/discord.desktop") or throw_err "Failed to create a shortcut: $!";
         
         while(<$in>) { 
             s/Icon=discord/Icon=$dest\/discord.png/g;
