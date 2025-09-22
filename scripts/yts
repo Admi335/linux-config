@@ -1,0 +1,21 @@
+#!/bin/sh
+query="$1"
+num_results="${2:-2}"
+[ -z "$query" ] && { echo "Usage: $0 <search terms> [num_results]"; exit 1; }
+
+CACHE_DIR="$HOME/.cache/yt-dlp"
+
+results=$(yt-dlp "ytsearch${num_results}:$query" --flat-playlist --print "%(id)s %(title)s" --cache-dir "$CACHE_DIR")
+
+[ -z "$results" ] && { echo "No results found."; exit 1; }
+
+choice=$(printf "%s\n" "$results" | fzf --with-nth=2.. --prompt="Select video> ")
+video_id=$(printf "%s" "$choice" | cut -f1)
+[ -z "$video_id" ] && exit 1
+
+read -p "Play audio-only? [y/N]: " yn
+if [ "$yn" = "y" ] || [ "$yn" = "Y" ]; then
+    exec mpv --no-video --input-terminal=yes --volume=50 "https://www.youtube.com/watch?v=$video_id"
+else
+    exec mpv --input-terminal=yes --volume=50 "https://www.youtube.com/watch?v=$video_id"
+fi
