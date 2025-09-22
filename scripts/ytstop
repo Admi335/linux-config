@@ -1,0 +1,13 @@
+#!/bin/sh
+SOCKET="/tmp/yt-mpv-ipc"
+
+if [ ! -e "$SOCKET" ]; then
+    echo "Np mpv IPC socket found. Is yt playing?" >&2
+    exit 1
+fi
+
+pgrep -f "mpv.*youtube.com" >/dev/null || { echo "No mpv running."; exit 0; }
+
+echo '{ "command": ["quit"] }' | socat - "$SOCKET" >/dev/null
+
+rm -f "$SOCKET"

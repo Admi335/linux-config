@@ -13,9 +13,13 @@ choice=$(printf "%s\n" "$results" | fzf --with-nth=2.. --prompt="Select video> "
 video_id=$(printf "%s" "$choice" | cut -f1)
 [ -z "$video_id" ] && exit 1
 
-read -p "Play audio-only? [y/N]: " yn
-if [ "$yn" = "y" ] || [ "$yn" = "Y" ]; then
-    exec mpv --no-video --input-terminal=yes --volume=50 "https://www.youtube.com/watch?v=$video_id"
+SOCKET="/tmp/yt-mpv-ipc"
+
+[ -e "$SOCKET" ] && rm "$SOCKET"
+
+read -p "Play video? [Y/n]: " yn
+if [ "$yn" = "n" ] || [ "$yn" = "N" ]; then
+    mpv --no-video --input-ipc-server="$SOCKET" --volume=50 "https://www.youtube.com/watch?v=$video_id" --quiet > /dev/null 2>&1 &
 else
-    exec mpv --input-terminal=yes --volume=50 "https://www.youtube.com/watch?v=$video_id"
+    mpv --input-ipc-server="$SOCKET" --volume=50 "https://www.youtube.com/watch?v=$video_id" --quiet > /dev/null 2>&1 &
 fi
